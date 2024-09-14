@@ -7,7 +7,7 @@ body {
   color: #ffffff;
 }
 
-code {
+pre, code {
   background: #000000;
   color: #ffffff;
   border: solid 1px #ffffff;
@@ -15,6 +15,12 @@ code {
   padding-left: 4px;
   padding-right: 4px;
 }
+
+pre>code {
+  background: none;
+  border: none;
+  border-radius: 0px;
+  padding: 0px;
 
 /*
 .ibm-plex-mono-regular {
