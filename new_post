@@ -1,0 +1,4 @@
+#!/bin/sh
+
+timestamp=$(date +'%Y%m%d%H%M')
+nvim "x_dc350f40/${timestamp}.md"

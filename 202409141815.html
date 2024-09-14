@@ -1,0 +1,134 @@
+<head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/e1c411f.css"  type="text/css"/>
+</head>
+
+<body>
+<pre class="timestamp">DATE: 2024-09-14
+TIME:      18:15</pre>
+<a class="go-home" href=https://0xe1c411f.github.io/>〈 home</a>
+<h1 id="inspecting-clang-output">Inspecting clang output</h1>
+<p>Suppose that you have a very inefficient tester for the Collatz
+conjecture that uses this function <code>f</code> to move forward in the
+sequence:</p>
+<pre><code>long long unsigned int f(long long unsigned int x) {
+  int x_mod_6 = x % 6;
+  if ((x_mod_6 == 0) || (x_mod_6 == 2) || (x_mod_6 == 4)) {
+    return x / 2;
+  } else if ((x_mod_6 == 1) || (x_mod_6 == 3) || (x_mod_6 == 5)) {
+    return 3 * x + 1;
+  }
+  return 3 * x + 1;
+}</code></pre>
+<p>The <code>clang++</code> flag <code>-S</code> tells the compiler to
+output the assembler instructions:</p>
+<pre><code>% clang++ --std=c++20 -c collatz.cc -S</code></pre>
+<h2 id="no-optimisation">No optimisation</h2>
+<p>Generating the instructions with <code>-O0</code> gives a faithful
+(and inefficient) implementation of <code>f</code>:</p>
+<pre><code># %bb.0:
+    pushq   %rbp
+    .cfi_def_cfa_offset 16
+    .cfi_offset %rbp, -16
+    movq    %rsp, %rbp
+    .cfi_def_cfa_register %rbp
+    movq    %rdi, -16(%rbp)
+    movq    -16(%rbp), %rax
+    movl    $6, %ecx
+    xorl    %edx, %edx
+                                        # kill: def $rdx killed $edx
+    divq    %rcx
+    movl    %edx, %eax
+    movl    %eax, -20(%rbp)
+    cmpl    $0, -20(%rbp)
+    je  .LBB0_3
+# %bb.1:
+    cmpl    $2, -20(%rbp)
+    je  .LBB0_3
+# %bb.2:
+    cmpl    $4, -20(%rbp)
+    jne .LBB0_4
+.LBB0_3:
+    movq    -16(%rbp), %rax
+    shrq    %rax
+    movq    %rax, -8(%rbp)
+    jmp .LBB0_10
+.LBB0_4:
+    cmpl    $1, -20(%rbp)
+    je  .LBB0_7
+# %bb.5:
+    cmpl    $3, -20(%rbp)
+    je  .LBB0_7
+# %bb.6:
+    cmpl    $5, -20(%rbp)
+    jne .LBB0_8
+.LBB0_7:
+    imulq   $3, -16(%rbp), %rax
+    addq    $1, %rax
+    movq    %rax, -8(%rbp)
+    jmp .LBB0_10
+.LBB0_8:
+    jmp .LBB0_9
+.LBB0_9:
+    imulq   $3, -16(%rbp), %rax
+    addq    $1, %rax
+    movq    %rax, -8(%rbp)
+.LBB0_10:
+    movq    -8(%rbp), %rax
+    popq    %rbp
+    .cfi_def_cfa %rsp, 8
+    retq</code></pre>
+<p>There is the even numbers branch:</p>
+<pre><code>    cmpl    $0, -20(%rbp)
+    je  .LBB0_3
+# %bb.1:
+    cmpl    $2, -20(%rbp)
+    je  .LBB0_3
+# %bb.2:
+    cmpl    $4, -20(%rbp)
+    jne .LBB0_4
+.LBB0_3:
+    movq    -16(%rbp), %rax
+    shrq    %rax
+    movq    %rax, -8(%rbp)
+    jmp .LBB0_10</code></pre>
+<p>and the odd numbers branch:</p>
+<pre><code>.LBB0_4:
+    cmpl    $1, -20(%rbp)
+    je  .LBB0_7
+# %bb.5:
+    cmpl    $3, -20(%rbp)
+    je  .LBB0_7
+# %bb.6:
+    cmpl    $5, -20(%rbp)
+    jne .LBB0_8
+.LBB0_7:
+    imulq   $3, -16(%rbp), %rax
+    addq    $1, %rax
+    movq    %rax, -8(%rbp)
+    jmp .LBB0_10</code></pre>
+<p>and that jump to <code>.LBB0_8</code> that will never be taken.</p>
+<h2 id="with-optimisation">With optimisation</h2>
+<p>Same source file compiled with <code>-O3</code> shows a more
+reasonable implementation with no jumps and conditional moves
+instead:</p>
+<pre><code># %bb.0:
+    movabsq $-6148914691236517205, %rcx     # imm = 0xAAAAAAAAAAAAAAAB
+    movq    %rdi, %rax
+    mulq    %rcx
+    shrq    $2, %rdx
+    addl    %edx, %edx
+    leal    (%rdx,%rdx,2), %eax
+    movl    %edi, %ecx
+    subl    %eax, %ecx
+    leaq    (%rdi,%rdi,2), %rax
+    incq    %rax
+    shrq    %rdi
+    testb   $5, %cl
+    cmoveq  %rdi, %rax
+    cmpl    $4, %ecx
+    cmoveq  %rdi, %rax
+    retq</code></pre>
+</body>
