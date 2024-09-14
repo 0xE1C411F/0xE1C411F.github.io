@@ -1,0 +1,30 @@
+#!/bin/sh
+
+style=""
+while getopts "s:i:" option; do
+  case $option in
+    s)
+      style=$OPTARG;;
+    i)
+      sourcefile=$OPTARG;;
+    \?)
+      echo "Usage:"
+      echo "    -s <file>: specify a header file that points to a style."
+      exit;;
+  esac
+done
+
+file=$(basename -- $sourcefile)
+filename="${file%.*}"
+
+echo $filename
+
+rm -f tmp.html
+rm -f "${filename}.html"
+
+pandoc -f markdown -t html5 -o tmp.html $sourcefile
+printf "%s\n%s\n%s\n" "<body>" "$(cat tmp.html)" "</body>" > tmp.html
+
+cat $style tmp.html > "${filename}.html"
+
+rm -f tmp.html
