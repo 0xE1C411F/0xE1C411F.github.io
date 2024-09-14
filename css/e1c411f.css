@@ -1,3 +1,8 @@
+body {
+  font-family: "IBM Plex Mono", monospace;
+}
+
+/*
 .ibm-plex-mono-regular {
   font-family: "IBM Plex Mono", monospace;
   font-weight: 400;
@@ -21,3 +26,4 @@
   font-weight: 700;
   font-style: italic;
 }
+*/
