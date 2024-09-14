@@ -49,8 +49,16 @@ pre>code {
   border-radius: 0px;
   padding: 0px;
 
-.timestamp>p {
-  line-height: 100%;
+.go-home {
+  text-decoration: none;
+  color: #ffdd8a;
+  font-size: small;
+}
+
+.timestamp {
+  margin: 0;
+  font-size: small;
+  color: #575767;
 }
 /*
 .ibm-plex-mono-regular {
