@@ -10,6 +10,7 @@ while getopts "s:i:" option; do
     \?)
       echo "Usage:"
       echo "    -s <file>: specify a header file that points to a style."
+      echo "    -i <file>: input file."
       exit;;
   esac
 done

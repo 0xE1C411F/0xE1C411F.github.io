@@ -1,0 +1,4 @@
+#!/bin/sh
+
+rm -f *.html
+./x_aa275aed/hyde -d x_dc350f40 -s x_b65afaf5/e1c411f -p x_b65afaf5/index

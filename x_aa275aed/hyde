@@ -1,0 +1,66 @@
+#!/bin/python3.11
+
+import subprocess as _sp
+import argparse as _ap
+import os as _os
+
+parser = _ap.ArgumentParser()
+parser.add_argument("-d", "--dir", dest="directory")
+parser.add_argument("-s", "--style", dest="style_prelude")
+parser.add_argument("-p", "--homepage", dest="homepage")
+
+args = vars(parser.parse_args())
+directory = args["directory"]
+style_prelude = args["style_prelude"]
+homepage = args["homepage"]
+
+source_files = sorted(list(filter(lambda x: x[-3:] == ".md", _os.listdir(directory))), reverse=True)
+
+links = []
+
+for source_file in source_files:
+    timestamp = source_file.split(".")[0]
+    year = timestamp[:4]
+    month = timestamp[4:6]
+    day = timestamp[6:8]
+    hour = timestamp[8:10]
+    minute = timestamp[10:12]
+
+    path = _os.path.join(directory, source_file)
+
+    page_title = ""
+    with open(path) as file:
+        for line in file:
+            if line[:2] == "# ":
+                page_title = line[2:].rstrip()
+                break
+
+    if page_title == "":
+        raise RuntimeError(f"Did not find title for {path}")
+
+    links.append(
+        f"<a style=\"color: inherit; text-decoration: none\" href=\"{timestamp + '.html'}\">\n"
+        "<div class=\"pagelink\">\n"
+        "<p style=\"padding: 0px; margin: 0px;\" class=\"timestamp\">"
+        f"DATETIME: {year}-{month}-{day} {hour}:{minute}</p>\n"
+        f"<h3 style=\"padding: 0px; margin: 0px;\">{page_title}</h3>\n"
+        "</div>\n"
+        "</a>\n"
+    )
+
+    _sp.run(f"./x_aa275aed/build_page -s {style_prelude} -i {path}", shell=True)
+
+_sp.run("rm -f index.html", shell=True)
+with open(homepage, 'r') as file:
+    homepage_head, homepage_tail = file.read().split("<!-- CONTENT -->")
+with open(style_prelude, 'r') as file:
+    headers = file.read()
+
+with open("index.html", "w") as file:
+    file.write(headers)
+    file.write("<body>")
+    file.write(homepage_head)
+    for link in links:
+        file.write(link)
+    file.write(homepage_tail)
+    file.write("</body>")
