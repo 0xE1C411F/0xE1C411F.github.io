@@ -2,6 +2,20 @@ body, code {
   font-family: "IBM Plex Mono", monospace;
 }
 
+body {
+  background: #000000;
+  color: #ffffff;
+}
+
+code {
+  background: #000000;
+  color: #ffffff;
+  border: solid 1px #ffffff;
+  border-radius: 3px;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
 /*
 .ibm-plex-mono-regular {
   font-family: "IBM Plex Mono", monospace;
