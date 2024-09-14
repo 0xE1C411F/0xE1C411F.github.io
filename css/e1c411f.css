@@ -49,6 +49,9 @@ pre>code {
   border-radius: 0px;
   padding: 0px;
 
+.timestamp>p {
+  line-height: 100%;
+}
 /*
 .ibm-plex-mono-regular {
   font-family: "IBM Plex Mono", monospace;

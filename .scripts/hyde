@@ -23,7 +23,16 @@ rm -f tmp.html
 rm -f "${filename}.html"
 
 pandoc -f markdown -t html5 -o tmp.html $sourcefile
-printf "%s\n%s\n%s\n" "<body>" "$(cat tmp.html)" "</body>" > tmp.html
+printf "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n"\
+  "<body>"\
+  "<a href=https://0xe1c411f.github.io/>〈home</a>"\
+  "<div class=\"timestamp\">"\
+  "<p>DATE: ${filename:0:4}-${filename:4:2}-${filename:6:2}</p>"\
+  "<p>TIME:      ${filename:8:2}:${filename:10:2}</p>"\
+  "</div>"\
+  "$(cat tmp.html)"\
+  "</body>"\
+  > tmp.html
 
 cat $style tmp.html > "${filename}.html"
 
