@@ -9,10 +9,28 @@
 <pre class="timestamp">DATE: 2024-09-14
 TIME:      18:15</pre>
 <a class="go-home" href=https://0xe1c411f.github.io/>〈 home</a>
-<h1 id="inspecting-clang-output">Inspecting clang output</h1>
-<p>Suppose that you have a very inefficient tester for the Collatz
-conjecture that uses this function <code>f</code> to move forward in the
-sequence:</p>
+<h1
+id="inspecting-clang-output-and-the-limits-of-optimisation">Inspecting
+clang output and the limits of optimisation</h1>
+<p>Anyone can understand the Collatz conjecture because it’s based on a
+simple game that any child would be able to understand and even play
+(although not many children would probably find it an incredibly
+entertaining game):</p>
+<blockquote>
+<p>Given a number <code>n</code>, divide it by 2 if it’s even, or
+multiply it by 3 and then add 1 if it’s odd. Then repeat with the
+result.</p>
+</blockquote>
+<p>So, starting from 3, the game would go to 10, 5, 16, 8, and finally
+in an infinite loop of 4, 2, 1, 4, 2, 1, 4, 2, 1, … Collatz conjecture
+asks if <strong>all</strong> positive integers will eventually reach the
+infinite loop, or if there is any exception that maybe falls in a
+different loop.</p>
+<p>A possibly inefficient way to test this conjecture would be to test
+all numbers one by one. In case you want to do that, chances are you
+will pick C++ to tackle this challenge.</p>
+<p>Of course, if you are dumb enough to attempt this, your function will
+probably look something like this:</p>
 <pre><code>long long unsigned int f(long long unsigned int x) {
   int x_mod_6 = x % 6;
   if ((x_mod_6 == 0) || (x_mod_6 == 2) || (x_mod_6 == 4)) {
@@ -22,12 +40,14 @@ sequence:</p>
   }
   return 3 * x + 1;
 }</code></pre>
-<p>The <code>clang++</code> flag <code>-S</code> tells the compiler to
-output the assembler instructions:</p>
-<pre><code>% clang++ --std=c++20 -c collatz.cc -S</code></pre>
-<h2 id="no-optimisation">No optimisation</h2>
-<p>Generating the instructions with <code>-O0</code> gives a faithful
-(and inefficient) implementation of <code>f</code>:</p>
+<p>And you will probably place your faith in the infinite wisdom of the
+compiler to optimise it. So, compile your code with the <code>-S</code>
+flag and see how much your compiler can really optimise this
+disaster.</p>
+<h2 id="no-optimisation--o0">No optimisation <code>-O0</code></h2>
+<pre><code>% clang++ --std=c++20 -O0 -c collatz.cc -S</code></pre>
+<p><code>-O0</code> generates instruction that replicate your source
+file as faithfully as possible:</p>
 <pre><code># %bb.0:
     pushq   %rbp
     .cfi_def_cfa_offset 16
@@ -41,46 +61,8 @@ output the assembler instructions:</p>
                                         # kill: def $rdx killed $edx
     divq    %rcx
     movl    %edx, %eax
-    movl    %eax, -20(%rbp)
-    cmpl    $0, -20(%rbp)
-    je  .LBB0_3
-# %bb.1:
-    cmpl    $2, -20(%rbp)
-    je  .LBB0_3
-# %bb.2:
-    cmpl    $4, -20(%rbp)
-    jne .LBB0_4
-.LBB0_3:
-    movq    -16(%rbp), %rax
-    shrq    %rax
-    movq    %rax, -8(%rbp)
-    jmp .LBB0_10
-.LBB0_4:
-    cmpl    $1, -20(%rbp)
-    je  .LBB0_7
-# %bb.5:
-    cmpl    $3, -20(%rbp)
-    je  .LBB0_7
-# %bb.6:
-    cmpl    $5, -20(%rbp)
-    jne .LBB0_8
-.LBB0_7:
-    imulq   $3, -16(%rbp), %rax
-    addq    $1, %rax
-    movq    %rax, -8(%rbp)
-    jmp .LBB0_10
-.LBB0_8:
-    jmp .LBB0_9
-.LBB0_9:
-    imulq   $3, -16(%rbp), %rax
-    addq    $1, %rax
-    movq    %rax, -8(%rbp)
-.LBB0_10:
-    movq    -8(%rbp), %rax
-    popq    %rbp
-    .cfi_def_cfa %rsp, 8
-    retq</code></pre>
-<p>There is the even numbers branch:</p>
+    movl    %eax, -20(%rbp)</code></pre>
+<p>Here you get the three comparisons:</p>
 <pre><code>    cmpl    $0, -20(%rbp)
     je  .LBB0_3
 # %bb.1:
@@ -88,13 +70,16 @@ output the assembler instructions:</p>
     je  .LBB0_3
 # %bb.2:
     cmpl    $4, -20(%rbp)
-    jne .LBB0_4
-.LBB0_3:
+    jne .LBB0_4</code></pre>
+<p>Which then continue into <code>.LBB0_3</code> (the divide by 2
+line):</p>
+<pre><code>.LBB0_3:
     movq    -16(%rbp), %rax
     shrq    %rax
     movq    %rax, -8(%rbp)
     jmp .LBB0_10</code></pre>
-<p>and the odd numbers branch:</p>
+<p>Otherwise you go into <code>.LBB0_4</code> with the useless
+additional checks:</p>
 <pre><code>.LBB0_4:
     cmpl    $1, -20(%rbp)
     je  .LBB0_7
@@ -103,32 +88,66 @@ output the assembler instructions:</p>
     je  .LBB0_7
 # %bb.6:
     cmpl    $5, -20(%rbp)
-    jne .LBB0_8
-.LBB0_7:
+    jne .LBB0_8</code></pre>
+<p>Note the jump to <code>.LBB0_8</code> for the else, obviously it can
+never be taken, but since it’s in the source file, it still gets an
+instruction in <code>-O0</code>.</p>
+<p><code>.LBB0_7</code> is the <code>3*x + 1</code>:</p>
+<pre><code>.LBB0_7:
     imulq   $3, -16(%rbp), %rax
     addq    $1, %rax
     movq    %rax, -8(%rbp)
     jmp .LBB0_10</code></pre>
-<p>and that jump to <code>.LBB0_8</code> that will never be taken.</p>
-<h2 id="with-optimisation">With optimisation</h2>
+<p><code>.LBB0_8</code> is… I don’t even know what it is, to be
+completely fair, but <code>.LBB0_9</code> is the <code>3*x + 1</code> in
+the final else:</p>
+<pre><code>.LBB0_8:
+    jmp .LBB0_9
+.LBB0_9:
+    imulq   $3, -16(%rbp), %rax
+    addq    $1, %rax
+    movq    %rax, -8(%rbp)</code></pre>
+<p>And finally the return:</p>
+<pre><code>.LBB0_10:
+    movq    -8(%rbp), %rax
+    popq    %rbp
+    .cfi_def_cfa %rsp, 8
+    retq</code></pre>
+<h2 id="with-optimisation--o3">With optimisation <code>-O3</code></h2>
 <p>Same source file compiled with <code>-O3</code> shows a more
-reasonable implementation with no jumps and conditional moves
-instead:</p>
+reasonable implementation with no jumps and conditional moves instead.
+It doesn’t look to me like a completely optmised code, but also, I don’t
+understand assembly, so there’s that. If that wasn’t enough, using
+<code>long long unsigned int</code> does complicate the instructions a
+little bit, but of course you had to use
+<code>long long unsigned int</code> to be able to test all positive
+integers. Wouldn’t want the future of mathematics to be put in jeopardy
+because you settled for plain old <code>int</code>s.</p>
+<p>Classic compiler optimising weird constants into the code:</p>
 <pre><code># %bb.0:
     movabsq $-6148914691236517205, %rcx     # imm = 0xAAAAAAAAAAAAAAAB
     movq    %rdi, %rax
     mulq    %rcx
     shrq    $2, %rdx
-    addl    %edx, %edx
-    leal    (%rdx,%rdx,2), %eax
+    addl    %edx, %edx</code></pre>
+<p>The <code>3*x + 1</code> became this:</p>
+<pre><code>    leal    (%rdx,%rdx,2), %eax
     movl    %edi, %ecx
     subl    %eax, %ecx
     leaq    (%rdi,%rdi,2), %rax
     incq    %rax
-    shrq    %rdi
-    testb   $5, %cl
+    shrq    %rdi</code></pre>
+<p>While the even-odd switch was condensed in this conditional move:</p>
+<pre><code>    testb   $5, %cl
     cmoveq  %rdi, %rax
     cmpl    $4, %ecx
     cmoveq  %rdi, %rax
     retq</code></pre>
+<p>Getting rid of conditionality is, obviously, impossible for this
+function. But given that the arithmetical operations involved are very
+fast (even the division, it’s just by 2), it’s easier to compute both
+values anyway and just return the correct one.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Don’t bother testing the Collatz conjecture. Personally, I hope there
+is another loop other than 4,2,1…</p>
 </body>
