@@ -8,6 +8,11 @@ body {
   margin: 0px;
 }
 
+blockquote {
+  border-left: solid 3px #41414f;
+  font-style: italic;
+}
+
 h1 {
   background: #17171c;
   padding: 32px;
