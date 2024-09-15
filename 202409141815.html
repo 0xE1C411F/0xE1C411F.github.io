@@ -1,7 +1,7 @@
 <head>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/e1c411f.css"  type="text/css"/>
 </head>
 
@@ -22,15 +22,15 @@ multiply it by 3 and then add 1 if it’s odd. Then repeat with the
 result.</p>
 </blockquote>
 <p>So, starting from 3, the game would go to 10, 5, 16, 8, and finally
-in an infinite loop of 4, 2, 1, 4, 2, 1, 4, 2, 1, … Collatz conjecture
-asks if <strong>all</strong> positive integers will eventually reach the
-infinite loop, or if there is any exception that maybe falls in a
-different loop.</p>
+in an infinite loop of 4, 2, 1, 4, 2, 1, 4, 2, 1, …</p>
+<p>The Collatz conjecture asks if <strong>all</strong> positive integers
+will eventually reach this specific infinite loop, or if there is any
+exception that maybe falls in a different loop.</p>
 <p>A possibly inefficient way to test this conjecture would be to test
 all numbers one by one. In case you want to do that, chances are you
-will pick C++ to tackle this challenge.</p>
-<p>Of course, if you are dumb enough to attempt this, your function will
-probably look something like this:</p>
+will pick C++ to tackle this challenge. Of course, if you are dumb
+enough to attempt this, your function will probably look something like
+this:</p>
 <pre><code>long long unsigned int f(long long unsigned int x) {
   int x_mod_6 = x % 6;
   if ((x_mod_6 == 0) || (x_mod_6 == 2) || (x_mod_6 == 4)) {
@@ -46,7 +46,7 @@ flag and see how much your compiler can really optimise this
 disaster.</p>
 <h2 id="no-optimisation--o0">No optimisation <code>-O0</code></h2>
 <pre><code>% clang++ --std=c++20 -O0 -c collatz.cc -S</code></pre>
-<p><code>-O0</code> generates instruction that replicate your source
+<p><code>-O0</code> generates instructions that replicate your source
 file as faithfully as possible:</p>
 <pre><code># %bb.0:
     pushq   %rbp
@@ -116,8 +116,8 @@ the final else:</p>
 <h2 id="with-optimisation--o3">With optimisation <code>-O3</code></h2>
 <p>Same source file compiled with <code>-O3</code> shows a more
 reasonable implementation with no jumps and conditional moves instead.
-It doesn’t look to me like a completely optmised code, but also, I don’t
-understand assembly, so there’s that. If that wasn’t enough, using
+It doesn’t look to me like a completely optimised code, but also, I
+don’t understand assembly, so there’s that. If that wasn’t enough, using
 <code>long long unsigned int</code> does complicate the instructions a
 little bit, but of course you had to use
 <code>long long unsigned int</code> to be able to test all positive
@@ -149,5 +149,7 @@ fast (even the division, it’s just by 2), it’s easier to compute both
 values anyway and just return the correct one.</p>
 <h2 id="conclusion">Conclusion</h2>
 <p>Don’t bother testing the Collatz conjecture. Personally, I hope there
-is another loop other than 4,2,1…</p>
+is another loop other than 4,2,1… it would be more interesting if there
+was an infinite loop between numbers of <code>1e40</code> orders of
+magnitude that we just never noticed.</p>
 </body>
